@@ -46,7 +46,7 @@ base_params = {
     'runs' : 30, # Number of runs
     'seeds' : None,
     'window_shape' : (3, 3),
-    'population_params': {'n_parents': 20},
+    'population_params': {'n_parents': 12},
     'primitives_str': (
         'common.Const255',
         'common.Const0',
@@ -67,15 +67,15 @@ base_params = {
         'n_inputs': 9,
         'n_outputs': 2,
         'n_columns': 4,
-        'n_rows': 4,
+        'n_rows': 9,
         'levels_back': 2
     },
-    'evolve_params': {'max_generations': 10, 'termination_fitness': -1.0},
+    'evolve_params': {'max_generations': 1000, 'termination_fitness': -1.0},
     'algorithm_params': {
-        'n_offsprings': 10,
+        'n_offsprings': 5,
         'mutation_rate': 0.1,
         'tournament_size' : 2,
-        'n_processes': 16
+        'n_processes': 4
     }
 }
 
