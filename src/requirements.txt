@@ -1,3 +1,7 @@
 docopt-ng==0.7.2
-hal-cgp @ file:///mnt/c/Users/vojon/Documents/%C5%A0kola/2_sem_ing/EVO/EVO/hal-cgp
+mpmath==1.3.0
 numpy==1.26.4
+opencv-python==4.9.0.80
+pillow==10.3.0
+scipy==1.13.0
+sympy==1.12
