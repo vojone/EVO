@@ -6,11 +6,12 @@
 #
 #
 # USAGE:
-# python prepare_data.py <src_img> <dst_img> <size> <noise> <noise_intensity>
+# python noise_images.py <src_img> <dst_img> <size> <noise> <noise_intensity>
 #
 # Following types of noises are supported:
 #
-# gaus - Additive gaussian noise (random vlaue from normal distribution is added to some pixels)
+# gaus - Additive gaussian noise (random vlaue from normal distribution is
+#   added to some pixels)
 # sp - Salt and pepper noise (some pixels are set to 0, some of them to 255)
 # line - Random horizontal white lines
 # linev - Random vertical white lines
@@ -18,6 +19,7 @@
 # scratch - Random bezier curves
 
 import sys
+import os
 import numpy as np
 from PIL import Image
 from scipy.ndimage import rotate as rotate_image
@@ -82,27 +84,39 @@ def add_salt_and_pepper(img : Image.Image, noised_pixels_num : int):
     return noised_img
 
 
-def add_line_noise(img : Image.Image, noised_pixels_num : int, rotation : int = 0, line_width : int = 1):
+def add_line_noise(
+    img : Image.Image,
+    noised_pixels_num : int,
+    rotation : int = 0,
+    max_width : int = 1,
+    min_stride : int = 2,
+    pixel_value : tuple[int, int] = (128, 255)):
     """Adds random lines to image. Their rotation and width may be chosen by parameters."""
 
-    line_num = int(noised_pixels_num * 0.2) # Noised pixel number is approximated (top limit) if some non-zero rotation is used
+    line_num = int(noised_pixels_num * 0.02) # Noised pixel number is approximated (top limit) if some non-zero rotation is used
     img_size, _ = img.size
 
     img = rotate_image(img, rotation)
     new_img_size, _ = img.shape
     img_array = np.array(img)
 
-    noise_indeces = np.random.choice(np.arange(new_img_size * new_img_size), line_num, replace=False)
+    r_idx = np.arange(0, new_img_size, min_stride)
+    c_idx = np.arange(new_img_size)
+    idxs = [ (r * new_img_size + c) for r, c in np.array(np.meshgrid(r_idx, c_idx)).T.reshape(-1, 2) ]
+    noise_indeces = np.random.choice(idxs, line_num, replace=False)
     remaining_noise_pixels = noised_pixels_num - line_num
     for i in noise_indeces:
         r, c = np.unravel_index(i, (new_img_size, new_img_size))
-        line_len = np.random.randint(0, new_img_size - c)
+        line_len = np.random.randint(-c, new_img_size - c)
+        line_width = np.random.randint(1, max_width + 1)
         remaining_noise_pixels -= line_len * line_width
-
         if remaining_noise_pixels <= 0:
             break
 
-        img_array[r:r + line_width, c:(c + line_len)] = 255
+        if line_len > 0:
+            img_array[r:r + line_width, c:(c + line_len)] = np.random.randint(pixel_value[0], pixel_value[1] + 1)
+        else:
+            img_array[r:r + line_width, (c + line_len):c] = np.random.randint(pixel_value[0], pixel_value[1] + 1)
 
     noised_img = rotate_image(img_array, -rotation)
     noised_img = Image.fromarray(noised_img.astype(np.uint8))
@@ -178,9 +192,13 @@ if __name__ == '__main__':
         img_size = int(sys.argv[3])
         noise_type = sys.argv[4]
         noised_pixels = float(sys.argv[5])
-    except:
+    except FileNotFoundError:
+        print(f'Error: Unable to open {sys.argv[1]}!')
+        exit(1)
+    except IndexError:
+        print('Usage error!')
         print('USAGE:')
-        print('python prepare_data.py <src_img> <dst_img> <size> <noise> <noise_intensity>')
+        print(f'python {sys.argv[0]} <src_img> <dst_img> <size> <noise> <noise_intensity>')
         print()
         print('Where <noise> is one of:')
         print('gaus - Additive gaussian noise')
@@ -204,11 +222,15 @@ if __name__ == '__main__':
         noised_img = add_gaussian_noise(img, noised_pixels_num)
     elif noise_type == 'line':
         noised_img = add_line_noise(img, noised_pixels_num)
-    elif noise_type == 'linev':
+    elif noise_type == 'linev': # Vertical lines
         noised_img = add_line_noise(img, noised_pixels_num, rotation=90)
-    elif noise_type == 'lined':
+    elif noise_type == 'lined': # Diagonal lines
         noised_img = add_line_noise(img, noised_pixels_num, rotation=40)
     elif noise_type == 'scratch':
         noised_img = add_scratch(img, noised_pixels_num)
+
+    new_img_dir = os.path.dirname(new_img_path)
+    if new_img_dir and (not os.path.exists(new_img_dir) or not os.path.isdir(new_img_dir)):
+        os.makedirs(new_img_dir)
 
     noised_img.save(new_img_path)
