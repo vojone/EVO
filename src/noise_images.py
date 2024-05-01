@@ -90,7 +90,7 @@ def add_line_noise(
     rotation : int = 0,
     max_width : int = 1,
     min_stride : int = 2,
-    pixel_value : tuple[int, int] = (128, 255)):
+    pixel_value : tuple[int, int] = (200, 255)):
     """Adds random lines to image. Their rotation and width may be chosen by parameters."""
 
     line_num = int(noised_pixels_num * 0.02) # Noised pixel number is approximated (top limit) if some non-zero rotation is used

@@ -24,24 +24,26 @@ DATA_PATH = '../data'
 RESULT_PATH = '../results'
 
 JSON_INDENT_SIZE = 4
-LOAD_PARAMS_FROM_FILE = False
+LOAD_PARAMS_FROM_FILE = True
 LOGGING_ENABLED = True
 
 # Function that determines if the new pixel value is used or the original one is used
-DETECTOR_FN = lambda d : d > 128
+DETECTOR_FN = lambda d : d > 127
 
 
 
 base_params = {
-    'name' : 'test',
+    'name' : 'gaus-mut1',
     'training_data' : [
         # Noised img, target img
         ('gaus256/city.jpg', 'target256/city.jpg')
     ],
     'validation_data' : [
-        'gaus256/city.jpg'
+        'gaus256/city.jpg',
+        'gaus256/lena.jpg',
+        'gaus256/squirrel.jpg'
     ],
-    'runs' : 1, # Number of runs
+    'runs' : 30, # Number of runs
     'seeds' : None,
     'window_shape' : (3, 3),
     'population_params': {'n_parents': 20},
@@ -68,11 +70,11 @@ base_params = {
         'n_rows': 4,
         'levels_back': 2
     },
-    'evolve_params': {'max_generations': 500, 'termination_fitness': -1.0},
+    'evolve_params': {'max_generations': 10, 'termination_fitness': -1.0},
     'algorithm_params': {
-        'n_offsprings': 4,
-        'mutation_rate': 0.3,
-        'tournament_size' : 4,
+        'n_offsprings': 10,
+        'mutation_rate': 0.1,
+        'tournament_size' : 2,
         'n_processes': 16
     }
 }
@@ -331,6 +333,7 @@ if __name__ == '__main__':
     best_champion : cgp.individual.IndividualBase = None
     # Perform more iteration of CGP with given config to have some significant results
     for i in range(params_['runs']):
+        print(f'i: {i}')
         champion = run_cgp(
             params_,
             i,
