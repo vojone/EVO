@@ -2,26 +2,33 @@ import time
 import numpy as np
 import cgp
 import json
-import sys
 import os
+import csv
+import pickle
+from datetime import datetime
 
 from PIL import Image
 from copy import deepcopy
 
 DATA_PATH = '.'
+RESULT_PATH = '.'
 
+JSON_INDENT_SIZE = 4
+
+# Function that determines if the new pixel value is used or the original one is used
 DETECTOR_FN = lambda d : d > 0
 
 params = {
+    'name' : 'base',
     'training_data' : [
         # Noised img, target img
         ('new_city.jpg', 'new_city_target.jpg')
     ],
     'validation_data' : [
-        'gaussian/city_square_monument_wonderful.jpg'
+        'gaus/city.jpg'
     ],
-    'iteration' : 4,
-    'seeds' : [np.random.randint(2**32 - 1), np.random.randint(2**32 - 1), np.random.randint(2**32 - 1), np.random.randint(2**32 - 1)],
+    'runs' : 4,
+    'seeds' : None,
     'window_shape' : (3, 3),
     'population_params': {'n_parents': 10},
     'primitives_str': ('cgp.Add','cgp.Sub'),
@@ -41,27 +48,29 @@ params = {
     }
 }
 
-log = {
-    '_initial_t' : time.time(),
-    't' : [],
-    'generation' : [],
-    'fitness' : [],
-}
 
+def serialize_individual(individual : cgp.individual.IndividualBase) -> str:
+    """Serializes and individual to the json string."""
 
-
-def serialize_inidividual(individual : cgp.individual.IndividualBase):
     return json.dumps({
         'fitness' : individual.fitness,
-        'sympy' : individual.to_sympy(),
-        'genome' : individual.genome,
+        'sympy' : str(individual.to_sympy()),
+        'genome' : str(individual.genome),
         'active_nodes' : cgp.CartesianGraph(individual.genome).print_active_nodes(),
         'pretty_str' : cgp.CartesianGraph(individual.genome).pretty_str(),
-    })
+    }, indent=JSON_INDENT_SIZE)
 
 
+def save_individual(individual : cgp.individual.IndividualBase, path : str):
+    """Saves individual in pickle format."""
 
-def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : str):
+    with open(path, 'wb') as f:
+        pickle.dump(individual, f, pickle.HIGHEST_PROTOCOL)
+
+
+def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : str) -> tuple[np.array, np.array]:
+    """Uses individual to denoise image specified by the path."""
+
     noised_img = Image.open(noised_img_path)
     noised_img_arr = np.array(noised_img) / 256
     img_shape = noised_img_arr.shape
@@ -89,7 +98,9 @@ def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : s
 
 
 
-def fitness(individual : cgp.individual.IndividualBase, input_data, target_data, noised_data):
+def fitness(individual : cgp.individual.IndividualBase, input_data, target_data, noised_data) -> float:
+    """Compute fitness (MSE between denoised and target image) of an individual."""
+
     def eval_pixel(func, x, y, z):
         """Computes squqred error for each pixel in the image."""
 
@@ -102,13 +113,15 @@ def fitness(individual : cgp.individual.IndividualBase, input_data, target_data,
     return mse
 
 
-def prepare_params(params : dict):
+def prepare_params(params : dict) -> dict:
+    """Converts parameter dicts from input format to the internal format."""
+
     internal_params = deepcopy(params)
 
     if internal_params['seeds'] is None:
-        internal_params['seeds'] = np.random.randint(2**32 - 1, size=internal_params['iteration'])
+        internal_params['seeds'] = np.random.randint(2**32 - 1, size=internal_params['runs'])
     else:
-        assert len(internal_params['seeds']) == internal_params['iteration']
+        assert len(internal_params['seeds']) == internal_params['runs']
 
     internal_params['population_params_'] = [ {
         'seed' : s,
@@ -116,14 +129,16 @@ def prepare_params(params : dict):
     } for s in internal_params['seeds'] ]
 
     internal_params['genome_params_'] = {
-        'primitives' : [ eval(s) for s in internal_params['primitives_str'] ],
+        'primitives' : tuple([ eval(s) for s in internal_params['primitives_str'] ]),
         **internal_params['genome_params']
     }
 
     return internal_params
 
 
-def load_training_data(data_paths : list[tuple[str, str]]):
+def load_training_data(data_paths : list[tuple[str, str]]) -> tuple[np.array, np.array, np.array]:
+    """Loads training data to the format suitable for filter training."""
+
     target_data = []
     noised_data = []
     input_data = []
@@ -154,12 +169,46 @@ def load_training_data(data_paths : list[tuple[str, str]]):
     return input_data, target_data, noised_data
 
 
-if __name__ == '__main__':
-    params_ = prepare_params(params)
+def save_log(log : dict, log_target_path : str) -> None:
+    """Saves the logging dict to CSV."""
 
-    input_data, target_data, noised_data = load_training_data(params_['training_data'])
+    with open(log_target_path, 'w', newline='') as f:
+        f.write(f"SEED: {log['seed']}\n")
+        f.write(f"BEST: {log['best_fitness']}\n")
+        w = csv.DictWriter(f, log['evolog'].keys())
+        w.writeheader()
+        for row in zip(*log['evolog'].values()):
+            w.writerow(dict(zip(log['evolog'].keys(), row)))
+
+
+def init_log() -> dict:
+    """Creates initial dictionary for logging."""
+
+    return {
+        '_initial_t' : time.time(),
+        'seed' : None,
+        'best_fitness' : None,
+        'evolog' : {
+            't' : [],
+            'generation' : [],
+            'fitness' : [],
+        }
+    }
+
+
+def run_cgp(
+    params : dict,
+    run_index : int,
+    input_data : np.array,
+    target_data : np.array,
+    noised_data : np.array,
+    enable_logging : bool = True,
+    results_path_dir : str = ''):
+    """One run of CGP."""
 
     def objective(individual : cgp.individual.IndividualBase):
+        """Objective function for evolution (we want to maximise the value of fitness)."""
+
         if not individual.fitness_is_None():
             return individual
 
@@ -172,31 +221,95 @@ if __name__ == '__main__':
 
 
     def logging(pop : cgp.Population):
-        log['t'].append(time.time() - log['_initial_t'])
-        log['generation'].append(pop.generation)
-        log['fitness'].append(pop.champion.fitness)
+        """Saves the value of best fitness in every generation."""
+
+        log['evolog']['t'].append(time.time() - log['_initial_t'])
+        log['evolog']['generation'].append(pop.generation)
+        log['evolog']['fitness'].append(pop.champion.fitness)
 
 
-    pop = cgp.Population(**params_['population_params'], genome_params=params_['genome_params'])
+    pop = cgp.Population(
+        **params['population_params_'][run_index],
+        genome_params=params['genome_params_']
+    )
 
     # Although it is a part of EA API we will use it for CGP, it works similarly, see docs for more info
-    alg = cgp.ea.MuPlusLambda(**params_['algorithm_params'])
+    alg = cgp.ea.MuPlusLambda(**params['algorithm_params'])
 
-    # Start
+    # Initialization of values in log
+    log = init_log()
+    log['seed'] = params['population_params_'][run_index]['seed']
+
+    # Start the evolution of filter
     cgp.evolve(
         objective, # Lambda would be better but there is "Can't pickle" error
         pop,
         alg,
-        **params_["evolve_params"],
+        **params_['evolve_params'],
         print_progress=True,
         callback=logging
     )
 
+    log['best_fitness'] = pop.champion.fitness
 
-    print(f"evolved function: {pop.champion}")
-    img, mask = apply_filter(pop.champion, '../data/gaussian/city_square_monument_wonderful.jpg')
-    Image.fromarray(img.astype(np.uint8)).save('denoised.jpg')
-    Image.fromarray(mask.astype(np.uint8)).save('mask.jpg')
+    if enable_logging:
+        save_log(log, os.path.join(results_path_dir, f"it{run_index}.csv"))
+
+    return pop.champion
 
 
-    print(json.dumps(params))
+
+def load_params(params_path : str) -> dict:
+    """Loads params from .json and creates dictionary with params."""
+
+    return json.load(params_path)
+
+
+
+if __name__ == '__main__':
+    timestamp = datetime.now().strftime("%d-%m-%H-%M")
+    params_ = prepare_params(params)
+
+    input_data, target_data, noised_data = load_training_data(params_['training_data'])
+
+    # Create directory for storing logs and results
+    results_path_dir = os.path.join(RESULT_PATH, f"{params['name']}-{timestamp}")
+    os.makedirs(results_path_dir)
+
+    best_champion : cgp.individual.IndividualBase = None
+    # Perform more iteration of CGP with given config to have some significant results
+    for i in range(params_['runs']):
+        champion = run_cgp(
+            params_,
+            i,
+            input_data,
+            target_data,
+            noised_data,
+            enable_logging=True,
+            results_path_dir=results_path_dir
+        )
+
+        if best_champion is None or best_champion.fitness < champion.fitness:
+            best_champion = champion
+
+
+    # Save the results
+
+    # Save the best champion
+    save_individual(best_champion, os.path.join(results_path_dir, f"best-filter.pkl"))
+    with open(os.path.join(results_path_dir, f"best-filter.json"), 'w') as f:
+        f.write(serialize_individual(best_champion))
+
+    # Save the input params
+    with open(os.path.join(results_path_dir, f"params.json"), 'w') as f:
+        f.write(json.dumps(params, indent=JSON_INDENT_SIZE))
+
+    # Apply the best filter to the validation data
+    for img_path in params['validation_data']:
+        img, mask = apply_filter(best_champion, img_path)
+
+        img_base_name = os.path.basename(img_path)
+        Image.fromarray(img.astype(np.uint8)).save(os.path.join(results_path_dir, f'{img_base_name}-denoised.jpg'))
+        Image.fromarray(mask.astype(np.uint8)).save(os.path.join(results_path_dir, f'{img_base_name}-mask.jpg'))
+
+
