@@ -2,6 +2,7 @@ import time
 import numpy as np
 import cgp
 import json
+import sys
 import os
 import csv
 import pickle
@@ -261,13 +262,19 @@ def run_cgp(
 
 def load_params(params_path : str) -> dict:
     """Loads params from .json and creates dictionary with params."""
-
-    return json.load(params_path)
+    with open(params_path, 'r') as f:
+        return json.load(f)
 
 
 
 if __name__ == '__main__':
-    timestamp = datetime.now().strftime("%d-%m-%H-%M")
+    if len(sys.argv) < 1:
+        print(f'USAGE: python {sys.argv[0]} <config-path>')
+        exit(1)
+
+    params = load_params(sys.argv[1])
+
+    timestamp = datetime.now().strftime('%d-%m-%H-%M')
     params_ = prepare_params(params)
 
     input_data, target_data, noised_data = load_training_data(params_['training_data'])
