@@ -2,14 +2,14 @@
     "name": "sp-mut1",
     "training_data": [
         [
-            "lined256/lena.jpg",
+            "sp256/lena.jpg",
             "target256/lena.jpg"
         ]
     ],
     "validation_data": [
-        "lined256/city.jpg",
-        "lined256/lena.jpg",
-        "lined256/squirrel.jpg"
+        "sp256/city.jpg",
+        "sp256/lena.jpg",
+        "sp256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -39,9 +39,9 @@
     "genome_params": {
         "n_inputs": 9,
         "n_outputs": 2,
-        "n_columns": 4,
-        "n_rows": 4,
-        "levels_back": 2
+        "n_columns": 10,
+        "n_rows": 2,
+        "levels_back": 3
     },
     "evolve_params": {
         "max_generations": 400,

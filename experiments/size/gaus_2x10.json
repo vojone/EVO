@@ -1,15 +1,15 @@
 {
-    "name": "sp-mut1",
+    "name": "gaus-mut1",
     "training_data": [
         [
-            "sp256/lena.jpg",
-            "target256/lena.jpg"
+            "gaus256/city.jpg",
+            "target256/city.jpg"
         ]
     ],
     "validation_data": [
-        "sp256/city.jpg",
-        "sp256/lena.jpg",
-        "sp256/squirrel.jpg"
+        "gaus256/city.jpg",
+        "gaus256/lena.jpg",
+        "gaus256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -39,9 +39,9 @@
     "genome_params": {
         "n_inputs": 9,
         "n_outputs": 2,
-        "n_columns": 5,
+        "n_columns": 10,
         "n_rows": 2,
-        "levels_back": 2
+        "levels_back": 3
     },
     "evolve_params": {
         "max_generations": 400,

@@ -39,8 +39,8 @@
     "genome_params": {
         "n_inputs": 9,
         "n_outputs": 2,
-        "n_columns": 5,
-        "n_rows": 2,
+        "n_columns": 6,
+        "n_rows": 9,
         "levels_back": 2
     },
     "evolve_params": {
