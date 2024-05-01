@@ -1,3 +1,9 @@
+#!/bin/python
+
+# Script for applying filter trained by CGP to custom image
+#
+# Author: Vojtěch Dvořák (xdvora3o)
+
 import time
 import numpy as np
 import cgp
@@ -15,11 +21,12 @@ DATA_PATH = '.'
 RESULT_PATH = '.'
 
 JSON_INDENT_SIZE = 4
+LOAD_PARAMS_FROM_FILE = True
 
 # Function that determines if the new pixel value is used or the original one is used
 DETECTOR_FN = lambda d : d > 0
 
-params = {
+base_params = {
     'name' : 'base',
     'training_data' : [
         # Noised img, target img
@@ -28,7 +35,7 @@ params = {
     'validation_data' : [
         'gaus/city.jpg'
     ],
-    'runs' : 4,
+    'runs' : 4, # Number of runs
     'seeds' : None,
     'window_shape' : (3, 3),
     'population_params': {'n_parents': 10},
@@ -268,11 +275,12 @@ def load_params(params_path : str) -> dict:
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 1:
+    if len(sys.argv) < 2:
+        print('Error: Missing config path!')
         print(f'USAGE: python {sys.argv[0]} <config-path>')
         exit(1)
 
-    params = load_params(sys.argv[1])
+    params = load_params(sys.argv[1]) if LOAD_PARAMS_FROM_FILE else base_params
 
     timestamp = datetime.now().strftime('%d-%m-%H-%M')
     params_ = prepare_params(params)

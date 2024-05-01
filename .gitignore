@@ -1,6 +1,8 @@
-__pycache__/*
+__pycache__
 
 env
 *.tmp
 
-cache.pkl
+*__cache__.pkl
+
+hal-cgp
