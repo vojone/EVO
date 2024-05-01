@@ -18,7 +18,7 @@
         3
     ],
     "population_params": {
-        "n_parents": 20
+        "n_parents": 12
     },
     "primitives_str": [
         "common.Const255",
@@ -44,13 +44,13 @@
         "levels_back": 2
     },
     "evolve_params": {
-        "max_generations": 400,
+        "max_generations": 1000,
         "termination_fitness": -1.0
     },
     "algorithm_params": {
         "n_offsprings": 4,
         "mutation_rate": 0.05,
         "tournament_size": 2,
-        "n_processes": 16
+        "n_processes": 4
     }
 }
