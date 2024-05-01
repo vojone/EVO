@@ -31,7 +31,6 @@ LOGGING_ENABLED = True
 DETECTOR_FN = lambda d : d > 128
 
 
-np.seterr(all='warn') # Avoid
 
 base_params = {
     'name' : 'test',
