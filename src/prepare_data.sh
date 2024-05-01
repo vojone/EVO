@@ -26,27 +26,27 @@ done
 
 # Gaussian
 for I in "${IMAGES[@]}"; do
-    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/gaus/$I" $DATA_SIZE gaus 0.15
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/gaus$DATA_SIZE/$I" $DATA_SIZE gaus 0.15
 done
 
 # S&P
 for I in "${IMAGES[@]}"; do
-    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/sp/$I" $DATA_SIZE sp 0.1
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/sp$DATA_SIZE/$I" $DATA_SIZE sp 0.1
 done
 
 # line
 for I in "${IMAGES[@]}"; do
-    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/line/$I" $DATA_SIZE line 0.2
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/line$DATA_SIZE/$I" $DATA_SIZE line 0.2
 done
 
 # lined
 for I in "${IMAGES[@]}"; do
-    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/lined/$I" $DATA_SIZE lined 0.2
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/lined$DATA_SIZE/$I" $DATA_SIZE lined 0.2
 done
 
 # scratch
 for I in "${IMAGES[@]}"; do
-    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/scratch/$I" $DATA_SIZE scratch 0.2
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/scratch$DATA_SIZE/$I" $DATA_SIZE scratch 0.2
 done
 
 echo "Done."
