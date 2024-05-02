@@ -17,6 +17,7 @@
         3,
         3
     ],
+    "detector_fn_name": "common.clipped_detector_fn",
     "population_params": {
         "n_parents": 12
     },

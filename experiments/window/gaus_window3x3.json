@@ -1,15 +1,15 @@
 {
-    "name": "scratch-mut15",
+    "name": "gaus-window-3x3",
     "training_data": [
         [
-            "scratch256/lena.jpg",
-            "target256/lena.jpg"
+            "gaus256/city.jpg",
+            "target256/city.jpg"
         ]
     ],
     "validation_data": [
-        "scratch256/city.jpg",
-        "scratch256/lena.jpg",
-        "scratch256/squirrel.jpg"
+        "gaus256/city.jpg",
+        "gaus256/lena.jpg",
+        "gaus256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -40,7 +40,7 @@
     "genome_params": {
         "n_inputs": 9,
         "n_outputs": 2,
-        "n_columns": 6,
+        "n_columns": 4,
         "n_rows": 9,
         "levels_back": 2
     },
@@ -50,7 +50,7 @@
     },
     "algorithm_params": {
         "n_offsprings": 8,
-        "mutation_rate": 0.15,
+        "mutation_rate": 0.1,
         "tournament_size": 2,
         "n_processes": 4
     }

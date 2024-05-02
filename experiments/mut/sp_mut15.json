@@ -17,6 +17,7 @@
         3,
         3
     ],
+    "detector_fn_name": "common.clipped_detector_fn",
     "population_params": {
         "n_parents": 12
     },
@@ -48,7 +49,7 @@
         "termination_fitness": -1.0
     },
     "algorithm_params": {
-        "n_offsprings": 4,
+        "n_offsprings": 8,
         "mutation_rate": 0.15,
         "tournament_size": 2,
         "n_processes": 4

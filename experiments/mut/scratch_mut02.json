@@ -1,5 +1,5 @@
 {
-    "name": "scratch-mut15",
+    "name": "scratch-mut02",
     "training_data": [
         [
             "scratch256/lena.jpg",
@@ -50,7 +50,7 @@
     },
     "algorithm_params": {
         "n_offsprings": 8,
-        "mutation_rate": 0.15,
+        "mutation_rate": 0.02,
         "tournament_size": 2,
         "n_processes": 4
     }

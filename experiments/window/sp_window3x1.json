@@ -1,22 +1,23 @@
 {
-    "name": "lined-mut05",
+    "name": "sp-window-3x1",
     "training_data": [
         [
-            "lined256/lena.jpg",
-            "target256/lena.jpg"
+            "sp256/city.jpg",
+            "target256/city.jpg"
         ]
     ],
     "validation_data": [
-        "lined256/city.jpg",
-        "lined256/lena.jpg",
-        "lined256/squirrel.jpg"
+        "sp256/city.jpg",
+        "sp256/lena.jpg",
+        "sp256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
     "window_shape": [
         3,
-        3
+        1
     ],
+    "detector_fn_name": "common.clipped_detector_fn",
     "population_params": {
         "n_parents": 12
     },
@@ -37,9 +38,9 @@
         "common.Avg"
     ],
     "genome_params": {
-        "n_inputs": 9,
+        "n_inputs": 3,
         "n_outputs": 2,
-        "n_columns": 6,
+        "n_columns": 4,
         "n_rows": 9,
         "levels_back": 2
     },
@@ -48,8 +49,8 @@
         "termination_fitness": -1.0
     },
     "algorithm_params": {
-        "n_offsprings": 4,
-        "mutation_rate": 0.05,
+        "n_offsprings": 8,
+        "mutation_rate": 0.1,
         "tournament_size": 2,
         "n_processes": 4
     }

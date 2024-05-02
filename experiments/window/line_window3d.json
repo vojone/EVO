@@ -1,15 +1,15 @@
 {
-    "name": "scratch-mut15",
+    "name": "line-window-3d",
     "training_data": [
         [
-            "scratch256/lena.jpg",
-            "target256/lena.jpg"
+            "line256/city.jpg",
+            "target256/city.jpg"
         ]
     ],
     "validation_data": [
-        "scratch256/city.jpg",
-        "scratch256/lena.jpg",
-        "scratch256/squirrel.jpg"
+        "line256/city.jpg",
+        "line256/lena.jpg",
+        "line256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -17,6 +17,7 @@
         3,
         3
     ],
+    "window_fn_name": "common.window_d3_fn",
     "detector_fn_name": "common.clipped_detector_fn",
     "population_params": {
         "n_parents": 12
@@ -38,9 +39,9 @@
         "common.Avg"
     ],
     "genome_params": {
-        "n_inputs": 9,
+        "n_inputs": 3,
         "n_outputs": 2,
-        "n_columns": 6,
+        "n_columns": 4,
         "n_rows": 9,
         "levels_back": 2
     },
@@ -50,7 +51,7 @@
     },
     "algorithm_params": {
         "n_offsprings": 8,
-        "mutation_rate": 0.15,
+        "mutation_rate": 0.1,
         "tournament_size": 2,
         "n_processes": 4
     }
