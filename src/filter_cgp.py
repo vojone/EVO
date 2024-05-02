@@ -46,7 +46,7 @@ base_params = {
     'runs' : 1, # Number of runs
     'seeds' : None,
     'window_shape' : (3, 3),
-    'detector_fn_name' : 'common.default_detector_fn',
+    'detector_fn_name' : 'common.clipped_detector_fn',
     'population_params': {'n_parents': 12},
     'primitives_str': (
         'common.Const255',
@@ -86,6 +86,9 @@ def serialize_individual(individual : cgp.individual.IndividualBase) -> str:
 
     return json.dumps({
         'fitness' : individual.fitness,
+        'window_fn' : individual.window_fn.__name__ if hasattr(individual, 'window_fn') and individual.window_fn is not None else None,
+        'detector_fn' : individual.detector_fn.__name__ if hasattr(individual, 'detector_fn') and individual.detector_fn is not None else None,
+        'window_shape' : individual.window_shape if hasattr(individual, 'window_shape') and  individual.window_shape is not None else None,
         'sympy' : str(individual.to_sympy()),
         'genome' : str(individual.genome),
         'active_nodes' : cgp.CartesianGraph(individual.genome).print_active_nodes(),
@@ -111,19 +114,26 @@ def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : s
     window_shape = individual.window_shape if hasattr(individual, 'window_shape') else params['window_shape']
     noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, window_shape)
 
-    input_data = noised_img_arr_window_view.reshape(
-        noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
-        window_shape[0],
-        window_shape[1]
-    )
-
     func = individual.to_func()
     detector_func = individual.detector_fn if hasattr(individual, 'detector_fn') else common.default_detector_fn
+    window_fn = individual.window_fn if hasattr(individual, 'window_fn') else None
+
+    if window_fn is None:
+        input_data = noised_img_arr_window_view.reshape(
+            noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
+            window_shape[0] * window_shape[1]
+        )
+    else:
+        input_data = window_fn(noised_img_arr_window_view.reshape(
+            noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
+            window_shape[0] * window_shape[1]
+        ))
 
     detector_mask = np.zeros_like(noised_img_arr).flatten()
     img = noised_img_arr.flatten()
+
     for i in range(len(img)):
-        detector, pixel = func(*(input_data[i].flatten()))
+        detector, pixel = func(*(input_data[i]))
         if detector_func(detector):
             img[i] = pixel % 256
             detector_mask[i] = 255
@@ -170,15 +180,22 @@ def prepare_params(params : dict) -> dict:
     else:
         internal_params['detector_fn'] = eval(internal_params['detector_fn_name'])
 
+    if 'window_fn_name' not in internal_params:
+        internal_params['window_fn'] = None
+    else:
+        internal_params['window_fn'] = eval(internal_params['window_fn_name'])
+
     return internal_params
 
 
-def load_training_data(data_paths : list[tuple[str, str]]) -> tuple[np.array, np.array, np.array]:
+def load_training_data(data_paths : list[tuple[str, str]], params : dict) -> tuple[np.array, np.array, np.array]:
     """Loads training data to the format suitable for filter training."""
 
     target_data = []
     noised_data = []
     input_data = []
+
+    window_fn = params['window_fn'] if 'window_fn' in params else None
 
     # Load images and convert them to arrays that are suitable for computation of fitness
     for d in data_paths:
@@ -194,10 +211,16 @@ def load_training_data(data_paths : list[tuple[str, str]]) -> tuple[np.array, np
         padded_noised_img_arr = np.pad(noised_img_arr, 1, 'edge')
         noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, params['window_shape'])
 
-        input_data.append(noised_img_arr_window_view.reshape(
-            noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
-            params['window_shape'][0] * params['window_shape'][1]
-        ))
+        if window_fn is None:
+            input_data.append(noised_img_arr_window_view.reshape(
+                noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
+                params['window_shape'][0] * params['window_shape'][1]
+            ))
+        else:
+            input_data.append(window_fn(noised_img_arr_window_view.reshape(
+                noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
+                params['window_shape'][0] * params['window_shape'][1]
+            )))
 
         target_data.append(target_img_arr.flatten())
         noised_data.append(noised_img_arr.flatten())
@@ -309,6 +332,7 @@ def run_cgp(
     log['best_fitness'] = pop.champion.fitness
     pop.champion.detector_fn = params['detector_fn']
     pop.champion.window_shape = params['window_shape']
+    pop.champion.window_fn = params['window_fn']
 
     if enable_logging:
         save_log(log, os.path.join(results_path_dir, f"it{run_index}.csv"))
@@ -335,7 +359,7 @@ if __name__ == '__main__':
     timestamp = datetime.now().strftime('%d-%m-%H-%M')
     params_ = prepare_params(params)
 
-    input_data, target_data, noised_data = load_training_data(params_['training_data'])
+    input_data, target_data, noised_data = load_training_data(params_['training_data'], params_)
 
     # Create directory for storing logs and results
     results_path_dir = os.path.join(RESULT_PATH, f"{params['name']}-{timestamp}")

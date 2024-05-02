@@ -136,7 +136,7 @@ def add_line_noise(
 
 # Following code was taken from https://stackoverflow.com/a/76760722
 # and it was edited to be suitable for this project
-def add_scratch(img : Image.Image, noised_pixels_num : int):
+def add_scratch(img : Image.Image, noised_pixels_num : int, pixel_value : tuple[int, int] = (128, 255)):
     """Adds random bezier curves (scratches) to the image."""
 
     from collections.abc import Generator
@@ -164,7 +164,7 @@ def add_scratch(img : Image.Image, noised_pixels_num : int):
         p2 = (p1 + p3) / 2 + [rho2 * np.cos(theta2), rho2 * np.sin(theta2), 0]
 
         for x, y, brush in bezier(p1, p2, p3):
-            cv.circle(img, (x, y), brush, 255, -1)
+            cv.circle(img, (x, y), brush, np.random.randint(pixel_value[0], pixel_value[1] + 1), -1)
         return img
 
     SCRATCH_CNT = int(noised_pixels_num * 0.1) # Noised pixel number is approximated (top limit) if some non-zero rotation is used

@@ -46,7 +46,7 @@ done
 
 # scratch
 for I in "${IMAGES[@]}"; do
-    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/scratch$DATA_SIZE/$I" $DATA_SIZE scratch 0.2
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/scratch$DATA_SIZE/$I" $DATA_SIZE scratch 0.25
 done
 
 echo "Done."
