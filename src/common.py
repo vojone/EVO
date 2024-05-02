@@ -1,4 +1,5 @@
 import cgp
+import numpy as np
 
 
 def default_detector_fn(detector_out):
@@ -7,6 +8,14 @@ def default_detector_fn(detector_out):
 
 def clipped_detector_fn(detector_out):
     return (detector_out % 256) > 127
+
+
+def window_d3_fn(windows):
+    return np.array([[w[0], w[4], w[8]] for w in windows])
+
+
+def window_cross_fn(windows):
+    return np.array([[w[1], w[3], w[4], w[5], w[7]] for w in windows])
 
 
 class Const255(cgp.OperatorNode):

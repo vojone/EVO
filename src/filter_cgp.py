@@ -24,16 +24,12 @@ DATA_PATH = '../data'
 RESULT_PATH = '../results'
 
 JSON_INDENT_SIZE = 4
-LOAD_PARAMS_FROM_FILE = False
+LOAD_PARAMS_FROM_FILE = True
 LOGGING_ENABLED = True
-
-# Function that determines if the new pixel value is used or the original one is used
-DETECTOR_FN = lambda d : d > 127
-
 
 
 base_params = {
-    'name' : 'gaus-mut1',
+    'name' : 'window-1x3',
     'training_data' : [
         # Noised img, target img
         ('gaus256/city.jpg', 'target256/city.jpg')
@@ -43,9 +39,10 @@ base_params = {
         'gaus256/lena.jpg',
         'gaus256/squirrel.jpg'
     ],
-    'runs' : 1, # Number of runs
+    'runs' : 1, # Number of runs (1 ONLY FOR TESTING)
     'seeds' : None,
     'window_shape' : (3, 3),
+    'window_fn_name' : 'common.window_cross_fn',
     'detector_fn_name' : 'common.clipped_detector_fn',
     'population_params': {'n_parents': 12},
     'primitives_str': (
@@ -65,7 +62,7 @@ base_params = {
         'common.Avg',
     ),
     'genome_params': {
-        'n_inputs': 9,
+        'n_inputs': 5,
         'n_outputs': 2,
         'n_columns': 4,
         'n_rows': 9,
@@ -73,7 +70,7 @@ base_params = {
     },
     'evolve_params': {'max_generations': 10, 'termination_fitness': -1.0},
     'algorithm_params': {
-        'n_offsprings': 5,
+        'n_offsprings': 8,
         'mutation_rate': 0.1,
         'tournament_size' : 2,
         'n_processes': 4
