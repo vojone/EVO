@@ -1,0 +1,56 @@
+{
+    "name": "lined_5x5",
+    "training_data": [
+        [
+            "lined256/lena.jpg",
+            "target256/lena.jpg"
+        ]
+    ],
+    "validation_data": [
+        "lined256/city.jpg",
+        "lined256/lena.jpg",
+        "lined256/squirrel.jpg"
+    ],
+    "runs": 30,
+    "seeds": null,
+    "window_shape": [
+        3,
+        3
+    ],
+    "population_params": {
+        "n_parents": 12
+    },
+    "primitives_str": [
+        "common.Const255",
+        "common.Const0",
+        "common.Identity",
+        "common.Inversion",
+        "common.Max",
+        "common.ConditionalAssignment",
+        "common.Min",
+        "common.Div2",
+        "common.Div4",
+        "common.Add",
+        "common.Sub",
+        "common.AddS",
+        "common.SubS",
+        "common.Avg"
+    ],
+    "genome_params": {
+        "n_inputs": 9,
+        "n_outputs": 2,
+        "n_columns": 5,
+        "n_rows": 5,
+        "levels_back": 2
+    },
+    "evolve_params": {
+        "max_generations": 1000,
+        "termination_fitness": -1.0
+    },
+    "algorithm_params": {
+        "n_offsprings": 4,
+        "mutation_rate": 0.1,
+        "tournament_size": 2,
+        "n_processes": 4
+    }
+}
