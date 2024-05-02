@@ -1,5 +1,14 @@
 import cgp
 
+
+def default_detector_fn(detector_out):
+    return detector_out > 127
+
+
+def clipped_detector_fn(detector_out):
+    return (detector_out % 256) > 127
+
+
 class Const255(cgp.OperatorNode):
     _arity = 0
     _def_output = "255"

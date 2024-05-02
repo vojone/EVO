@@ -24,7 +24,7 @@ DATA_PATH = '../data'
 RESULT_PATH = '../results'
 
 JSON_INDENT_SIZE = 4
-LOAD_PARAMS_FROM_FILE = True
+LOAD_PARAMS_FROM_FILE = False
 LOGGING_ENABLED = True
 
 # Function that determines if the new pixel value is used or the original one is used
@@ -43,9 +43,10 @@ base_params = {
         'gaus256/lena.jpg',
         'gaus256/squirrel.jpg'
     ],
-    'runs' : 30, # Number of runs
+    'runs' : 1, # Number of runs
     'seeds' : None,
     'window_shape' : (3, 3),
+    'detector_fn_name' : 'common.default_detector_fn',
     'population_params': {'n_parents': 12},
     'primitives_str': (
         'common.Const255',
@@ -70,7 +71,7 @@ base_params = {
         'n_rows': 9,
         'levels_back': 2
     },
-    'evolve_params': {'max_generations': 1000, 'termination_fitness': -1.0},
+    'evolve_params': {'max_generations': 10, 'termination_fitness': -1.0},
     'algorithm_params': {
         'n_offsprings': 5,
         'mutation_rate': 0.1,
@@ -107,34 +108,36 @@ def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : s
     img_shape = noised_img_arr.shape
 
     padded_noised_img_arr = np.pad(noised_img_arr, 1, 'edge')
-    noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, params['window_shape'])
+    window_shape = individual.window_shape if hasattr(individual, 'window_shape') else params['window_shape']
+    noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, window_shape)
 
     input_data = noised_img_arr_window_view.reshape(
         noised_img_arr_window_view.shape[0] * noised_img_arr_window_view.shape[1],
-        params['window_shape'][0],
-        params['window_shape'][1]
+        window_shape[0],
+        window_shape[1]
     )
 
     func = individual.to_func()
+    detector_func = individual.detector_fn if hasattr(individual, 'detector_fn') else common.default_detector_fn
 
     detector_mask = np.zeros_like(noised_img_arr).flatten()
     img = noised_img_arr.flatten()
     for i in range(len(img)):
         detector, pixel = func(*(input_data[i].flatten()))
-        if DETECTOR_FN(detector):
+        if detector_func(detector):
             img[i] = pixel % 256
             detector_mask[i] = 255
 
     return img.reshape(img_shape), detector_mask.reshape(img_shape)
 
 
-def fitness(individual : cgp.individual.IndividualBase, input_data, target_data, noised_data) -> float:
+def fitness(individual : cgp.individual.IndividualBase, detector_fn, input_data, target_data, noised_data) -> float:
     """Compute fitness (MSE between denoised and target image) of an individual."""
 
     def eval_pixel(func, x, y, z):
         """Computes squared error for each pixel in the image."""
         detector, pixel = func(*x)
-        return (float(pixel % 256) - y)**2 if DETECTOR_FN(detector) else (z - y)**2
+        return (float(pixel % 256) - y)**2 if detector_fn(detector) else (z - y)**2
 
     func = individual.to_func()
     mse = np.mean([eval_pixel(func, x, float(y), float(z)) for x, y, z in zip(input_data, target_data, noised_data)])
@@ -161,6 +164,11 @@ def prepare_params(params : dict) -> dict:
         'primitives' : tuple([ eval(s) for s in internal_params['primitives_str'] ]),
         **internal_params['genome_params']
     }
+
+    if 'detector_fn_name' not in internal_params:
+        internal_params['detector_fn'] = common.default_detector_fn # Default detector fn to be compatible with old configs
+    else:
+        internal_params['detector_fn'] = eval(internal_params['detector_fn_name'])
 
     return internal_params
 
@@ -231,11 +239,13 @@ class Objective:
         input_data : np.array,
         target_data : np.array,
         noised_data : np.array,
+        detector_fn,
         fitness_fn) -> None:
 
         self.input_data = input_data
         self.target_data = target_data
         self.noised_data = noised_data
+        self.detector_fn = detector_fn
         self.fitness_fn = fitness_fn
 
     def __call__(self, individual : cgp.individual.IndividualBase) -> cgp.individual.IndividualBase:
@@ -246,7 +256,7 @@ class Objective:
 
         # We will compute mean from fitnesses on all training data (but usually there will be just one image)
         individual.fitness = -np.mean([
-            self.fitness_fn(individual, i, t, n) for i, t, n in zip(
+            self.fitness_fn(individual, self.detector_fn, i, t, n) for i, t, n in zip(
                 self.input_data,
                 self.target_data,
                 self.noised_data
@@ -288,7 +298,7 @@ def run_cgp(
 
     # Start the evolution of filter
     cgp.evolve(
-        Objective(input_data, target_data, noised_data, fitness), # Lambda would be better but there is "Can't pickle" error
+        Objective(input_data, target_data, noised_data, params['detector_fn'], fitness), # Lambda would be better but there is "Can't pickle" error
         pop,
         alg,
         **params_['evolve_params'],
@@ -297,6 +307,8 @@ def run_cgp(
     )
 
     log['best_fitness'] = pop.champion.fitness
+    pop.champion.detector_fn = params['detector_fn']
+    pop.champion.window_shape = params['window_shape']
 
     if enable_logging:
         save_log(log, os.path.join(results_path_dir, f"it{run_index}.csv"))
