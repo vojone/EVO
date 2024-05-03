@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     img, mask = filter_cgp.apply_filter(img_filter, img_path)
 
-    img_base_name = os.path.basename(img_path)
+    img_base_name = os.path.basename(img_path).split('.')[0]
     Image.fromarray(img.astype(np.uint8)).save(f'{img_base_name}-denoised.jpg')
     Image.fromarray(mask.astype(np.uint8)).save(f'{img_base_name}-mask.jpg')
 
