@@ -1,12 +1,19 @@
 {
-    "name": "sp-window-3x3",
+    "name": "universal-window-5x5",
     "training_data": [
         [
-            "sp256/city.jpg",
-            "target256/city.jpg"
+            "gaus256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "sp256/lena.jpg",
+            "target256/lena.jpg"
         ]
     ],
     "validation_data": [
+        "gaus256/city.jpg",
+        "gaus256/lena.jpg",
+        "gaus256/squirrel.jpg",
         "sp256/city.jpg",
         "sp256/lena.jpg",
         "sp256/squirrel.jpg"
@@ -14,8 +21,8 @@
     "runs": 30,
     "seeds": null,
     "window_shape": [
-        3,
-        3
+        5,
+        5
     ],
     "detector_fn_name": "common.clipped_detector_fn",
     "population_params": {
@@ -38,7 +45,7 @@
         "common.Avg"
     ],
     "genome_params": {
-        "n_inputs": 3,
+        "n_inputs": 9,
         "n_outputs": 2,
         "n_columns": 4,
         "n_rows": 9,

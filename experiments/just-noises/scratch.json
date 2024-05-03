@@ -1,15 +1,15 @@
 {
-    "name": "sp-window-3x3",
+    "name": "scratch",
     "training_data": [
         [
-            "sp256/city.jpg",
-            "target256/city.jpg"
+            "scratch256/lena.jpg",
+            "target256/lena.jpg"
         ]
     ],
     "validation_data": [
-        "sp256/city.jpg",
-        "sp256/lena.jpg",
-        "sp256/squirrel.jpg"
+        "scratch256/city.jpg",
+        "scratch256/lena.jpg",
+        "scratch256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,

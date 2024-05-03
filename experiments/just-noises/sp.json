@@ -1,9 +1,9 @@
 {
-    "name": "sp-window-3x3",
+    "name": "sp",
     "training_data": [
         [
-            "sp256/city.jpg",
-            "target256/city.jpg"
+            "sp256/lena.jpg",
+            "target256/lena.jpg"
         ]
     ],
     "validation_data": [

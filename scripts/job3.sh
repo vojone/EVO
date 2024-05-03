@@ -4,12 +4,9 @@
 
 pushd src || exit
 
-python3 filter_cgp.py ../experiments/size/gaus_2x10.json >>"$MSTATUS" &
-python3 filter_cgp.py ../experiments/size/gaus_5x5.json >>"$MSTATUS" &
-python3 filter_cgp.py ../experiments/size/gaus_9x6.json >>"$MSTATUS" &
-
-python3 filter_cgp.py ../experiments/size/lined_2x10.json >>"$MSTATUS" &
-python3 filter_cgp.py ../experiments/size/lined_5x5.json >>"$MSTATUS" &
-python3 filter_cgp.py ../experiments/size/lined_9x6.json >>"$MSTATUS" &
+python3 filter_cgp.py ../experiments/universal-filter/window3x3.json >>"$MSTATUS" &
+python3 filter_cgp.py ../experiments/universal-filter/window5x5.json >>"$MSTATUS" &
+python3 filter_cgp.py ../experiments/universal-filter/all_window3x3.json >>"$MSTATUS" &
+python3 filter_cgp.py ../experiments/universal-filter/all_window5x5.json >>"$MSTATUS" &
 
 wait

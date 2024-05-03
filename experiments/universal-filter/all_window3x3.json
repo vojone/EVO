@@ -1,15 +1,31 @@
 {
-    "name": "sp-window-3x3",
+    "name": "universal-all-window-3x3",
     "training_data": [
         [
-            "sp256/city.jpg",
-            "target256/city.jpg"
+            "lined256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "line256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "scratch256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "gaus256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "sp256/lena.jpg",
+            "target256/lena.jpg"
         ]
     ],
     "validation_data": [
-        "sp256/city.jpg",
-        "sp256/lena.jpg",
-        "sp256/squirrel.jpg"
+        "lined256/lena.jpg",
+        "line256/lena.jpg",
+        "scratch256/lena.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -38,7 +54,7 @@
         "common.Avg"
     ],
     "genome_params": {
-        "n_inputs": 3,
+        "n_inputs": 9,
         "n_outputs": 2,
         "n_columns": 4,
         "n_rows": 9,
