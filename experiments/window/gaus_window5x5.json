@@ -38,10 +38,10 @@
         "common.Avg"
     ],
     "genome_params": {
-        "n_inputs": 9,
+        "n_inputs": 25,
         "n_outputs": 2,
-        "n_columns": 4,
-        "n_rows": 9,
+        "n_columns": 8,
+        "n_rows": 15,
         "levels_back": 2
     },
     "evolve_params": {
