@@ -3,6 +3,9 @@
 # Script for applying filter trained by CGP to custom image
 #
 # Author: Vojtěch Dvořák (xdvora3o)
+#
+# USAGE:
+# python filter_cgp.py <config-file-path>
 
 import time
 import numpy as np
@@ -20,32 +23,32 @@ from datetime import datetime
 from PIL import Image
 from copy import deepcopy
 
-DATA_PATH = '../data'
-RESULT_PATH = '../results'
+DATA_PATH = '../data' # Base path of the directory with data
+RESULT_PATH = '../results' # Base path of the directory where the results (logs, best-filter etc. will be stored)
 
 JSON_INDENT_SIZE = 4
-LOAD_PARAMS_FROM_FILE = True
-LOGGING_ENABLED = True
+LOAD_PARAMS_FROM_FILE = True # If true, one commandline argument with experiment cofing JSON is expected, otherwise base_params object is used
+LOGGING_ENABLED = True # Deactivates logging and saving the results (good for debugging)
 
 
 base_params = {
-    'name' : 'window-1x3',
-    'training_data' : [
+    'name' : 'window-cross', # Name of experiment
+    'training_data' : [ # Data for training of the filter
         # Noised img, target img
         ('gaus256/city.jpg', 'target256/city.jpg')
     ],
-    'validation_data' : [
+    'validation_data' : [ # Data for validation (the best filter is applied to these data)
         'gaus256/city.jpg',
         'gaus256/lena.jpg',
         'gaus256/squirrel.jpg'
     ],
-    'runs' : 1, # Number of runs (1 ONLY FOR TESTING)
-    'seeds' : None,
-    'window_shape' : (3, 3),
-    'window_fn_name' : 'common.window_cross_fn',
-    'detector_fn_name' : 'common.clipped_detector_fn',
-    'population_params': {'n_parents': 12},
-    'primitives_str': (
+    'runs' : 1, # Number of runs (!1 ONLY FOR TESTING!)
+    'seeds' : None, # Seeds can be provided manually to reproduce some runs
+    'window_shape' : (3, 3), # Sliding window that will be passed to filter (or window_fn and tehn to the filter)
+    'window_fn_name' : 'common.window_cross_fn', # Name of function, that preprocesses sliding window (e. g. to some non-rectangular shape)
+    'detector_fn_name' : 'common.clipped_detector_fn', # Name of function that converts detector output to boolean value (where True means "Noise detected!")
+    'population_params': {'n_parents': 12}, # Population params (see hal-cgp docs for more info)
+    'primitives_str': ( # Names of primitives that can be used inside the filter
         'common.Const255',
         'common.Const0',
         'common.Identity',
@@ -61,6 +64,7 @@ base_params = {
         'common.SubS',
         'common.Avg',
     ),
+    # Genome, ovlution and algorithm params (see hal-cgp docs for more info)
     'genome_params': {
         'n_inputs': 5,
         'n_outputs': 2,
@@ -79,7 +83,8 @@ base_params = {
 
 
 def serialize_individual(individual : cgp.individual.IndividualBase) -> str:
-    """Serializes and individual to the json string."""
+    """Serializes an individual to the json string.
+    """
 
     return json.dumps({
         'fitness' : individual.fitness,
@@ -94,26 +99,34 @@ def serialize_individual(individual : cgp.individual.IndividualBase) -> str:
 
 
 def save_individual(individual : cgp.individual.IndividualBase, path : str):
-    """Saves individual in pickle format."""
+    """Saves individual in pickle format. Pickled individual can be later use for filtering.
+    """
 
     with open(path, 'wb') as f:
         pickle.dump(individual, f, pickle.HIGHEST_PROTOCOL)
 
 
-def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : str) -> tuple[np.array, np.array]:
-    """Uses individual to denoise image specified by the path."""
+def apply_filter(
+    individual : cgp.individual.IndividualBase,
+    noised_img_path : str) -> tuple[np.array, np.array]:
+    """Uses individual to denoise image specified by the path.
+    """
 
     noised_img = Image.open(noised_img_path)
     noised_img_arr = np.array(noised_img).astype(np.int32)
     img_shape = noised_img_arr.shape
 
-    padded_noised_img_arr = np.pad(noised_img_arr, 1, 'edge')
-    window_shape = individual.window_shape if hasattr(individual, 'window_shape') else params['window_shape']
-    noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, window_shape)
-
+    # Prepare the relevant components of individual
     func = individual.to_func()
     detector_func = individual.detector_fn if hasattr(individual, 'detector_fn') else common.default_detector_fn
     window_fn = individual.window_fn if hasattr(individual, 'window_fn') else None
+
+    # Prepare the input data for faster processing
+    window_shape = individual.window_shape if hasattr(individual, 'window_shape') else (3, 3)
+    row_padding = (window_shape[0] // 2, window_shape[0] // 2)
+    column_padding = (window_shape[1] // 2, window_shape[1] // 2)
+    padded_noised_img_arr = np.pad(noised_img_arr, (row_padding, column_padding), 'edge')
+    noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, window_shape)
 
     if window_fn is None:
         input_data = noised_img_arr_window_view.reshape(
@@ -126,6 +139,7 @@ def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : s
             window_shape[0] * window_shape[1]
         ))
 
+    # Apply the filter
     detector_mask = np.zeros_like(noised_img_arr).flatten()
     img = noised_img_arr.flatten()
 
@@ -138,11 +152,19 @@ def apply_filter(individual : cgp.individual.IndividualBase, noised_img_path : s
     return img.reshape(img_shape), detector_mask.reshape(img_shape)
 
 
-def fitness(individual : cgp.individual.IndividualBase, detector_fn, input_data, target_data, noised_data) -> float:
-    """Compute fitness (MSE between denoised and target image) of an individual."""
+def fitness(
+    individual : cgp.individual.IndividualBase,
+    detector_fn,
+    input_data,
+    target_data,
+    noised_data) -> float:
+    """Compute fitness (MSE between denoised and target image) of an individual.
+    """
 
     def eval_pixel(func, x, y, z):
-        """Computes squared error for each pixel in the image."""
+        """Computes squared error for each pixel in the image.
+        """
+
         detector, pixel = func(*x)
         return (float(pixel % 256) - y)**2 if detector_fn(detector) else (z - y)**2
 
@@ -153,7 +175,9 @@ def fitness(individual : cgp.individual.IndividualBase, detector_fn, input_data,
 
 
 def prepare_params(params : dict) -> dict:
-    """Converts parameter dicts from input format to the internal format."""
+    """Converts parameter dicts from input format to the internal format and sets some missing
+    values to the default ones.
+    """
 
     internal_params = deepcopy(params)
 
@@ -185,8 +209,11 @@ def prepare_params(params : dict) -> dict:
     return internal_params
 
 
-def load_training_data(data_paths : list[tuple[str, str]], params : dict) -> tuple[np.array, np.array, np.array]:
-    """Loads training data to the format suitable for filter training."""
+def load_training_data(
+    data_paths : list[tuple[str, str]],
+    params : dict) -> tuple[np.array, np.array, np.array]:
+    """Loads training data to the format suitable for filter training.
+    """
 
     target_data = []
     noised_data = []
@@ -200,12 +227,16 @@ def load_training_data(data_paths : list[tuple[str, str]], params : dict) -> tup
         target_img_path = d[1]
 
         noised_img = Image.open(os.path.join(DATA_PATH, noised_img_path))
-        noised_img_arr = np.array(noised_img).astype(np.int32) # Load image as array of 32-bit integers to avoid overflows in filter
+        # Load image as array of 32-bit integers to avoid overflows in filter
+        noised_img_arr = np.array(noised_img).astype(np.int32)
 
         target_img = Image.open(os.path.join(DATA_PATH, target_img_path))
         target_img_arr = np.array(target_img).astype(np.int32)
 
-        padded_noised_img_arr = np.pad(noised_img_arr, 1, 'edge')
+        # Prepare data to the format for faster processing
+        row_padding = (params['window_shape'][0] // 2, params['window_shape'][0] // 2)
+        column_padding = (params['window_shape'][1] // 2, params['window_shape'][1] // 2)
+        padded_noised_img_arr = np.pad(noised_img_arr, (row_padding, column_padding), 'edge')
         noised_img_arr_window_view = np.lib.stride_tricks.sliding_window_view(padded_noised_img_arr, params['window_shape'])
 
         if window_fn is None:
@@ -225,13 +256,18 @@ def load_training_data(data_paths : list[tuple[str, str]], params : dict) -> tup
     return input_data, target_data, noised_data
 
 
-def save_log(log : dict, log_target_path : str, resolution : dict = {'t' : 4, 'fitness' : 6}) -> None:
-    """Saves the logging dict to CSV."""
+def save_log(
+    log : dict,
+    log_target_path : str,
+    resolution : dict = {'t' : 4, 'fitness' : 6}) -> None:
+    """Saves the logging dict to CSV file. Resolution (number of decimal places) can be specified
+    by the resolution dictionary."""
 
     def to_formated_str(r, rsln):
         return (r[0], '{:.{prec}f}'.format(r[1], prec=rsln[r[0]])) if r[0] in rsln else (r[0], str(r[1]))
 
     with open(log_target_path, 'w', newline='') as f:
+        # Save also seed of the run (for better reproducibility) and best fitness (to avoid scrolling milions lines to find the best fitness)
         f.write(f"SEED: {log['seed']}\n")
         f.write(f"BEST: {log['best_fitness']}\n")
         w = csv.DictWriter(f, log['evolog'].keys())
@@ -322,7 +358,7 @@ def run_cgp(
 
     # Start the evolution of filter
     cgp.evolve(
-        Objective(input_data, target_data, noised_data, params['detector_fn'], fitness), # Lambda would be better but there is "Can't pickle" error
+        Objective(input_data, target_data, noised_data, params['detector_fn'], fitness),
         pop,
         alg,
         **params_['evolve_params'],
@@ -330,6 +366,7 @@ def run_cgp(
         callback=logging
     )
 
+    # Save some settings directly in the individual
     log['best_fitness'] = pop.champion.fitness
     pop.champion.detector_fn = params['detector_fn']
     pop.champion.window_shape = params['window_shape']
@@ -401,7 +438,10 @@ if __name__ == '__main__':
             img, mask = apply_filter(best_champion, os.path.join(DATA_PATH, img_path))
 
             img_base_name = os.path.basename(img_path)
-            Image.fromarray(img.astype(np.uint8)).save(os.path.join(results_path_dir, f'{img_base_name.split(".")[0]}-denoised.jpg'))
-            Image.fromarray(mask.astype(np.uint8)).save(os.path.join(results_path_dir, f'{img_base_name.split(".")[0]}-mask.jpg'))
+            img_pil = Image.fromarray(img.astype(np.uint8))
+            mask_pil = Image.fromarray(mask.astype(np.uint8))
+
+            img_pil.save(os.path.join(results_path_dir, f'{img_base_name.split(".")[0]}-denoised.jpg'))
+            mask_pil.save(os.path.join(results_path_dir, f'{img_base_name.split(".")[0]}-mask.jpg'))
 
 

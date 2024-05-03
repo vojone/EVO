@@ -19,7 +19,7 @@ from PIL import Image
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         print('Error: Missing arguments!')
-        print(f'USAGE: python {sys.argv[0]} <filter-pkl-path> <img-path>')
+        print(f'USAGE: python {sys.argv[0]} <filter-pkl-path> <noised-img-path>')
         exit(1)
 
     filter_pkl_path = sys.argv[1]
