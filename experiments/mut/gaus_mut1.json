@@ -49,7 +49,7 @@
         "termination_fitness": -1.0
     },
     "algorithm_params": {
-        "n_offsprings": 4,
+        "n_offsprings": 8,
         "mutation_rate": 0.1,
         "tournament_size": 2,
         "n_processes": 4

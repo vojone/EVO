@@ -225,8 +225,11 @@ def load_training_data(data_paths : list[tuple[str, str]], params : dict) -> tup
     return input_data, target_data, noised_data
 
 
-def save_log(log : dict, log_target_path : str) -> None:
+def save_log(log : dict, log_target_path : str, resolution : dict = {'t' : 4, 'fitness' : 6}) -> None:
     """Saves the logging dict to CSV."""
+
+    def to_formated_str(r, rsln):
+        return (r[0], '{:.{prec}f}'.format(r[1], prec=rsln[r[0]])) if r[0] in rsln else (r[0], str(r[1]))
 
     with open(log_target_path, 'w', newline='') as f:
         f.write(f"SEED: {log['seed']}\n")
@@ -234,7 +237,8 @@ def save_log(log : dict, log_target_path : str) -> None:
         w = csv.DictWriter(f, log['evolog'].keys())
         w.writeheader()
         for row in zip(*log['evolog'].values()):
-            w.writerow(dict(zip(log['evolog'].keys(), row)))
+            d = dict([to_formated_str(z, resolution) for z in zip(log['evolog'].keys(), row)])
+            w.writerow(d)
 
 
 def init_log() -> dict:
