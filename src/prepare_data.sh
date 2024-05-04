@@ -39,6 +39,11 @@ for I in "${IMAGES[@]}"; do
     python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/line$DATA_SIZE/$I" $DATA_SIZE line 0.2
 done
 
+# line-color
+for I in "${IMAGES[@]}"; do
+    python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/line-color$DATA_SIZE/$I" $DATA_SIZE line-color 0.2
+done
+
 # lined
 for I in "${IMAGES[@]}"; do
     python noise_images.py "$TARGET_DATA_DIR/$I" "$DATA_DIR/lined$DATA_SIZE/$I" $DATA_SIZE lined 0.2

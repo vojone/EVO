@@ -14,6 +14,7 @@
 #   added to some pixels)
 # sp - Salt and pepper noise (some pixels are set to 0, some of them to 255)
 # line - Random horizontal white lines
+# line-color - Random horizontal lines with random color
 # linev - Random vertical white lines
 # lined - Random vertical diagonal lines
 # scratch - Random bezier curves
@@ -204,6 +205,7 @@ if __name__ == '__main__':
         print('gaus - Additive gaussian noise')
         print('sp - Salt and pepper noise')
         print('line - Random horizontal white lines')
+        print('line-color - Random horizontal lines with random color')
         print('linev - Random vertical white lines')
         print('lined - Random vertical diagonal lines')
         print('scratch - Random bezier curves')
@@ -222,6 +224,8 @@ if __name__ == '__main__':
         noised_img = add_gaussian_noise(img, noised_pixels_num)
     elif noise_type == 'line':
         noised_img = add_line_noise(img, noised_pixels_num)
+    elif noise_type == 'line-color':
+        noised_img = add_line_noise(img, noised_pixels_num, pixel_value=(0,255))
     elif noise_type == 'linev': # Vertical lines
         noised_img = add_line_noise(img, noised_pixels_num, rotation=90)
     elif noise_type == 'lined': # Diagonal lines
