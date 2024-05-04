@@ -32,7 +32,7 @@ LOGGING_ENABLED = True # Deactivates logging and saving the results (good for de
 
 
 base_params = {
-    'name' : 'window-cross', # Name of experiment
+    'name' : 'mock-experiment', # Name of experiment
     'training_data' : [ # Data for training of the filter
         # Noised img, target img
         ('gaus256/city.jpg', 'target256/city.jpg')
@@ -94,7 +94,7 @@ def serialize_individual(individual : cgp.individual.IndividualBase) -> str:
         'sympy' : str(individual.to_sympy()),
         'genome' : str(individual.genome),
         'active_nodes' : cgp.CartesianGraph(individual.genome).print_active_nodes(),
-        'pretty_str' : cgp.CartesianGraph(individual.genome).pretty_str(),
+        #'pretty_str' : cgp.CartesianGraph(individual.genome).pretty_str(),
     }, indent=JSON_INDENT_SIZE)
 
 
@@ -424,11 +424,6 @@ if __name__ == '__main__':
 
     # Save the results
     if LOGGING_ENABLED:
-        # Save the best champion
-        save_individual(best_champion, os.path.join(results_path_dir, f"best-filter.pkl"))
-        with open(os.path.join(results_path_dir, f"best-filter.json"), 'w') as f:
-            f.write(serialize_individual(best_champion))
-
         # Save the input params
         with open(os.path.join(results_path_dir, f"params.json"), 'w') as f:
             f.write(json.dumps(params, indent=JSON_INDENT_SIZE))
@@ -443,5 +438,10 @@ if __name__ == '__main__':
 
             img_pil.save(os.path.join(results_path_dir, f'{img_base_name.split(".")[0]}-denoised.jpg'))
             mask_pil.save(os.path.join(results_path_dir, f'{img_base_name.split(".")[0]}-mask.jpg'))
+
+        # Save the best champion
+        save_individual(best_champion, os.path.join(results_path_dir, f"best-filter.pkl"))
+        with open(os.path.join(results_path_dir, f"best-filter.json"), 'w') as f:
+            f.write(serialize_individual(best_champion))
 
 
