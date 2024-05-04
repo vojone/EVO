@@ -29,6 +29,9 @@ if __name__ == '__main__':
     with open(filter_pkl_path, 'rb') as f:
         img_filter = pickle.load(f)
 
+    # with open('best-filter.json', 'w') as f:
+    #     f.write(filter_cgp.serialize_individual(img_filter))
+
     img, mask = filter_cgp.apply_filter(img_filter, img_path)
 
     img_base_name = os.path.basename(img_path).split('.')[0]
