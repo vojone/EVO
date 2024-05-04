@@ -1,15 +1,15 @@
 {
-    "name": "scratch-old",
+    "name": "gaus_4x3_long",
     "training_data": [
         [
-            "scratch256_old/lena.jpg",
-            "target256/lena.jpg"
+            "gaus256/city.jpg",
+            "target256/city.jpg"
         ]
     ],
     "validation_data": [
-        "scratch256_old/city.jpg",
-        "scratch256_old/lena.jpg",
-        "scratch256_old/squirrel.jpg"
+        "gaus256/city.jpg",
+        "gaus256/lena.jpg",
+        "gaus256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -19,7 +19,7 @@
     ],
     "detector_fn_name": "common.clipped_detector_fn",
     "population_params": {
-        "n_parents": 12
+        "n_parents": 16
     },
     "primitives_str": [
         "common.Const255",
@@ -40,18 +40,18 @@
     "genome_params": {
         "n_inputs": 9,
         "n_outputs": 2,
-        "n_columns": 4,
-        "n_rows": 9,
+        "n_columns": 3,
+        "n_rows": 4,
         "levels_back": 2
     },
     "evolve_params": {
-        "max_generations": 1000,
+        "max_generations": 3000,
         "termination_fitness": -1.0
     },
     "algorithm_params": {
         "n_offsprings": 8,
         "mutation_rate": 0.1,
         "tournament_size": 2,
-        "n_processes": 4
+        "n_processes": 6
     }
 }

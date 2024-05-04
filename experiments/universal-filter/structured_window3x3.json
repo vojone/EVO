@@ -1,15 +1,28 @@
 {
-    "name": "scratch-old",
+    "name": "structured-window-3x3",
     "training_data": [
         [
-            "scratch256_old/lena.jpg",
+            "lined256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "line256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "scratch256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "line-color256/lena.jpg",
             "target256/lena.jpg"
         ]
     ],
     "validation_data": [
-        "scratch256_old/city.jpg",
-        "scratch256_old/lena.jpg",
-        "scratch256_old/squirrel.jpg"
+        "lined256/lena.jpg",
+        "line256/lena.jpg",
+        "line-color256/lena.jpg",
+        "scratch256/lena.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -52,6 +65,6 @@
         "n_offsprings": 8,
         "mutation_rate": 0.1,
         "tournament_size": 2,
-        "n_processes": 4
+        "n_processes": 6
     }
 }

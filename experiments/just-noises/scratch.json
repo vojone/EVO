@@ -38,7 +38,7 @@
         "common.Avg"
     ],
     "genome_params": {
-        "n_inputs": 3,
+        "n_inputs": 9,
         "n_outputs": 2,
         "n_columns": 4,
         "n_rows": 9,
