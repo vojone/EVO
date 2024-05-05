@@ -1,16 +1,22 @@
 {
-    "NOTE" : "This result is the same as scratch_9x6-03-05-03-22",
-    "name": "scratch_9x6",
+    "name": "universal-window-3x3",
     "training_data": [
         [
-            "scratch256/lena.jpg",
+            "gaus256/lena.jpg",
+            "target256/lena.jpg"
+        ],
+        [
+            "sp256/lena.jpg",
             "target256/lena.jpg"
         ]
     ],
     "validation_data": [
-        "scratch256/city.jpg",
-        "scratch256/lena.jpg",
-        "scratch256/squirrel.jpg"
+        "gaus256/city.jpg",
+        "gaus256/lena.jpg",
+        "gaus256/squirrel.jpg",
+        "sp256/city.jpg",
+        "sp256/lena.jpg",
+        "sp256/squirrel.jpg"
     ],
     "runs": 30,
     "seeds": null,
@@ -41,7 +47,7 @@
     "genome_params": {
         "n_inputs": 9,
         "n_outputs": 2,
-        "n_columns": 6,
+        "n_columns": 4,
         "n_rows": 9,
         "levels_back": 2
     },
@@ -53,6 +59,6 @@
         "n_offsprings": 8,
         "mutation_rate": 0.1,
         "tournament_size": 2,
-        "n_processes": 4
+        "n_processes": 12
     }
 }

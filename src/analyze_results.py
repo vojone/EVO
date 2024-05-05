@@ -16,6 +16,8 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import numpy as np
+from PIL import Image
 from glob import glob
 
 SKIP_LINES_CSV = 2
@@ -187,7 +189,9 @@ def plot_run_data_boxplot(
     data_name,
     filter_regex = None,
     skip_filtered = False,
-    ax = None):
+    ax = None,
+    x = None,
+    plot_params : dict = {}):
 
     experiments_to_be_plot = experiments if filter_regex is None else filter_experiments(experiments, filter_regex, skip_filtered)
     # print(runs)
@@ -199,12 +203,42 @@ def plot_run_data_boxplot(
     if ax is None:
         _, ax = plt.subplots()
 
-    sns.boxplot(merged, x='experiment-name', y=data_name, ax=ax)
+    sns.boxplot(merged, x=('experiment-name' if x is None else x), y=data_name, ax=ax, **plot_params)
     ax.set_ylabel(data_name)
     ax.set_xlabel('Experiment')
     ax.tick_params(axis='x', labelrotation=45)
 
     return ax
+
+
+def image_mse(image1, image2):
+    """Computes MSE similarly as it is computed in filter_cgp.py.
+    """
+
+    if image1.shape != image2.shape:
+        raise ValueError("Images does not have the same dimensions!")
+    
+    def eval_pixel(x, y):
+        """Computes squared error for each pixel in the image."""
+        return (float(x) - float(y))**2
+
+    mse = np.mean([eval_pixel(x, y) for x, y in zip(image1.flatten(), image2.flatten())])
+    return mse
+
+
+def mse_with_target(target_image_path : str, images_paths : list[str]):
+    target_image = np.array(Image.open(target_image_path))
+
+    paths = []
+    mses = []
+    for path in images_paths:
+        for gpath in glob(path):
+            img = np.array(Image.open(gpath))
+
+            mses.append(image_mse(target_image, img))
+            paths.append(gpath)
+
+    return pd.DataFrame({'image' : paths, 'mse' : mses})
 
 
 def plot_run_data_hist(
@@ -213,7 +247,8 @@ def plot_run_data_hist(
     data_name,
     filter_regex = None,
     skip_filtered = False,
-    ax = None):
+    ax = None,
+    plot_params : dict = {}):
 
     experiments_to_be_plot = experiments if filter_regex is None else filter_experiments(experiments, filter_regex, skip_filtered)
     # print(runs)
@@ -225,7 +260,7 @@ def plot_run_data_hist(
     if ax is None:
         _, ax = plt.subplots()
 
-    sns.histplot(merged, x=data_name, ax=ax, binwidth=50)
+    sns.histplot(merged, x=data_name, ax=ax, binwidth=50, **plot_params)
     ax.set_ylabel(data_name)
     ax.set_xlabel('Experiment')
     ax.tick_params(axis='x', labelrotation=45)
@@ -267,7 +302,7 @@ def get_active_nodes_df(results : list[dict]):
     active_nodes = []
     for r in results:
         graph = cgp.CartesianGraph(r['best_filter'].genome)
-        nodes = len([node for node in graph._nodes if node._active])
+        nodes = len([node for node in graph._nodes if node._active and type(node) != cgp.node_input_output.OutputNode and type(node) != cgp.node_input_output.InputNode])
         active_nodes.append(nodes)
 
     active_nodes_df['active_nodes'] = active_nodes
@@ -286,17 +321,18 @@ if __name__ == '__main__':
     results = load_results(result_paths)
     experiments, runs, generations = to_dataframes(results)
 
-    plot_run_data_boxplot(experiments, runs, 'fitness', filter_regex=r'gaus')
-    plt.savefig('fitness-boxplot.png')
+    # plot_run_data_boxplot(experiments, runs, 'fitness', filter_regex=r'gaus')
+    # plt.savefig('fitness-boxplot.png')
 
-    plot_run_data_hist(experiments, runs, 'fitness', filter_regex=r'gaus')
-    plt.savefig('fitness-hist.png')
+    # plot_run_data_hist(experiments, runs, 'fitness', filter_regex=r'gaus')
+    # plt.savefig('fitness-hist.png')
 
-    ax = plot_conv_lines(experiments, generations, filter_regex=r'2x10', skip_filtered=True,
-                         plot_params={ 'palette' : ['r', 'g', 'c', 'm'], 'estimator' : 'median', 'errorbar' : None})
-    plot_conv_lines(experiments, generations, filter_regex=r'2x10',
-                    plot_params={ 'estimator' : 'median',  'errorbar' : ("pi", 25)}, ax=ax)
-    plt.savefig('fitness-convergence.png')
+    # ax = plot_conv_lines(experiments, generations, filter_regex=r'2x10', skip_filtered=True,
+    #                      plot_params={ 'palette' : ['r', 'g', 'c', 'm'], 'estimator' : 'median', 'errorbar' : None})
+    # plot_conv_lines(experiments, generations, filter_regex=r'2x10',
+    #                 plot_params={ 'estimator' : 'median',  'errorbar' : ("pi", 25)}, ax=ax)
+    # plt.savefig('fitness-convergence.png')
 
     print(get_active_nodes_df(results))
     print(get_pretty_str(results[0]))
+    print(mse_with_target('../data/target256/lena.jpg', ['../data/*256/lena.jpg']))

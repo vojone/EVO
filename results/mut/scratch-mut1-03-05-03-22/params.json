@@ -1,6 +1,5 @@
 {
-    "NOTE" : "This result is the same as scratch_9x6-03-05-03-22",
-    "name": "scratch_9x6",
+    "name": "scratch-mut1",
     "training_data": [
         [
             "scratch256/lena.jpg",
