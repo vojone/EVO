@@ -1,3 +1,8 @@
+# Auxiliary functions for CGP
+#
+# Author: Vojtěch Dvořák (xdvora3o)
+
+
 import cgp
 import numpy as np
 
